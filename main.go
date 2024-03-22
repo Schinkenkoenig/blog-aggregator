@@ -15,6 +15,17 @@ func main() {
 	mux := http.NewServeMux()
 	middlewared := middlewareCors(mux)
 
+	mux.HandleFunc("GET /v1/readiness", func(w http.ResponseWriter, r *http.Request) {
+		type ReadinessResponse struct {
+			Status string `json:"status"`
+		}
+		respondWithJSON(w, 200, ReadinessResponse{Status: "ok"})
+	})
+
+	mux.HandleFunc("GET /v1/err", func(w http.ResponseWriter, r *http.Request) {
+		respondWithError(w, 500, "Internal server error")
+	})
+
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), middlewared)
 
 	panic(err)

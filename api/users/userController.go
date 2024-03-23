@@ -2,8 +2,7 @@ package users
 
 import (
 	"context"
-	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,18 +17,6 @@ type UsersController struct {
 
 type CreateUserRequest struct {
 	Name string `json:"name"`
-}
-
-func NewFromReader(r io.ReadCloser) *CreateUserRequest {
-	var req CreateUserRequest
-	decoder := json.NewDecoder(r)
-	err := decoder.Decode(&req)
-	if err != nil {
-		// ignore err
-		return nil
-	}
-
-	return &req
 }
 
 func FromDatabaseUser(user *database.User) *UserResponse {
@@ -48,10 +35,30 @@ type UserResponse struct {
 	Id        uuid.UUID `json:"id"`
 }
 
+func (controller *UsersController) getUserByApiKeyHandler(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := helpers.GetApiKey(r)
+	if err != nil {
+		helpers.RespondWithError(w, 400, "expecting api key in authorization header")
+		return
+	}
+
+	fmt.Printf("apiKey: %s", apiKey)
+
+	user, err := controller.DB.GetUserByApiKey(context.Background(), apiKey)
+	if err != nil {
+		helpers.RespondWithError(w, 404, "no matching user found")
+		return
+	}
+
+	resp := FromDatabaseUser(&user)
+
+	helpers.RespondWithJSON(w, 200, resp)
+}
+
 func (controller *UsersController) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	// get data out of request
 
-	req := NewFromReader(r.Body)
+	req := helpers.NewRequestFromReader[CreateUserRequest](r.Body)
 	if req == nil {
 		helpers.RespondWithError(w, 400, "body could not be parsed")
 		return

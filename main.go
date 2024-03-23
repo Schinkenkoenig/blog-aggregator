@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Schinkenkoenig/blog-aggregator/api/feeds"
 	healthApi "github.com/Schinkenkoenig/blog-aggregator/api/health"
 	"github.com/Schinkenkoenig/blog-aggregator/api/users"
 	"github.com/Schinkenkoenig/blog-aggregator/internal/database"
@@ -24,20 +25,25 @@ func main() {
 		panic(err)
 	}
 
+	// set up database queries
 	db, err := sql.Open("postgres", config.ConnectionString)
 	if err != nil {
 		panic(err)
 	}
 	dbQueries := database.New(db)
 
+	// setup http server, apply middlewares and routes
 	mux := http.NewServeMux()
 	middlewared := middlewareCors(mux)
 
+	// create controller structs with injected services
 	userController := users.UsersController{DB: dbQueries}
+	feedController := feeds.FeedsController{DB: dbQueries}
 
 	applyAllRoutes(mux,
 		healthApi.HealthControllerRoutes{},
-		&userController)
+		&userController,
+		&feedController)
 
 	err = http.ListenAndServe(fmt.Sprintf(":%s", config.Port), middlewared)
 

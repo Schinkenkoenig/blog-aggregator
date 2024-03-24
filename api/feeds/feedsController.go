@@ -2,6 +2,7 @@ package feeds
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -97,6 +98,17 @@ func (fc *FeedsController) CreateFeedHandler(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		helpers.RespondWithError(w, 500, "could not save feed")
 		return
+	}
+
+	_, err = fc.DB.FollowFeed(context.Background(), database.FollowFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		FeedID:    feed.ID,
+		UserID:    user.ID,
+	})
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	resp := NewFromDatabase(feed)

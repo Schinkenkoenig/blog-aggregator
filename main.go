@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	feedfollows "github.com/Schinkenkoenig/blog-aggregator/api/feed_follows"
 	"github.com/Schinkenkoenig/blog-aggregator/api/feeds"
 	healthApi "github.com/Schinkenkoenig/blog-aggregator/api/health"
 	"github.com/Schinkenkoenig/blog-aggregator/api/users"
@@ -39,11 +40,13 @@ func main() {
 	// create controller structs with injected services
 	userController := users.UsersController{DB: dbQueries}
 	feedController := feeds.FeedsController{DB: dbQueries}
+	feedFollowsController := feedfollows.FeedFollowsController{DB: dbQueries}
 
 	applyAllRoutes(mux,
 		healthApi.HealthControllerRoutes{},
 		&userController,
-		&feedController)
+		&feedController,
+		&feedFollowsController)
 
 	err = http.ListenAndServe(fmt.Sprintf(":%s", config.Port), middlewared)
 

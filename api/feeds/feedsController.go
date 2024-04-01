@@ -22,24 +22,31 @@ type CreateFeedRequest struct {
 }
 
 type FeedResponse struct {
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Name      string    `json:"name"`
-	Url       string    `json:"url"`
-	UserId    uuid.UUID `json:"user_id"`
-	Id        uuid.UUID `json:"id"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	LastFetchedAt *time.Time `json:"last_fetched_at"`
+	Name          string     `json:"name"`
+	Url           string     `json:"url"`
+	UserId        uuid.UUID  `json:"user_id"`
+	Id            uuid.UUID  `json:"id"`
 }
 
 type ListFeedResponse []FeedResponse
 
 func NewFromDatabase(feed database.Feed) *FeedResponse {
+	var lastFetched *time.Time
+	if feed.LastFetchedAt.Valid {
+		lastFetched = &feed.LastFetchedAt.Time
+	}
+
 	return &FeedResponse{
-		Id:        feed.ID,
-		CreatedAt: feed.CreatedAt,
-		UpdatedAt: feed.UpdatedAt,
-		Name:      feed.Name,
-		Url:       feed.Name,
-		UserId:    feed.UserID,
+		Id:            feed.ID,
+		CreatedAt:     feed.CreatedAt,
+		UpdatedAt:     feed.UpdatedAt,
+		LastFetchedAt: lastFetched,
+		Name:          feed.Name,
+		Url:           feed.Name,
+		UserId:        feed.UserID,
 	}
 }
 
